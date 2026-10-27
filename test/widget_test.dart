@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bookshelf/app.dart';
+import 'package:bookshelf/models/book.dart';
 import 'package:bookshelf/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,55 @@ void main() {
     await tester.pumpWidget(BookShelfApp(auth: auth, repository: repository));
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'successful Add reveals confirmation and new book after a long form',
+    (tester) async {
+      auth.user = const ShelfUser('alice', 'alice@example.com');
+      for (var i = 0; i < 5; i++) {
+        await repository.add(
+          'alice',
+          BookDraft(
+            title: 'Existing book $i',
+            author: 'An existing author',
+            genre: 'Other',
+            status: 'To Read',
+          ),
+        );
+      }
+      await launch(tester);
+      await tester.tap(find.text('Add a book'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'A newly added book',
+      );
+      await tester.enterText(find.byType(TextFormField).at(1), 'New author');
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Fiction').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byType(DropdownButtonFormField<String>).at(1),
+      );
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reading').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).at(3),
+        'Long notes. ' * 20,
+      );
+      final submit = find.widgetWithText(FilledButton, 'Add book');
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(find.text('Book added').hitTestable(), findsOneWidget);
+      expect(find.text('A newly added book').hitTestable(), findsOneWidget);
+      expect(repository.books.length, 6);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('public Home, Register validation and live error clearing', (
     tester,

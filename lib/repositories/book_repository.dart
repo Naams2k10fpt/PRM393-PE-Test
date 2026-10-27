@@ -34,12 +34,10 @@ class FirestoreBookRepository implements BookRepository {
   Future<String> add(String uid, BookDraft draft) async {
     final id = bookDocumentId(uid, draft.title, draft.author);
     final reference = _books.doc(id);
-    await firestore.runTransaction((transaction) async {
+    final created = await firestore.runTransaction<bool>((transaction) async {
       final existing = await transaction.get(reference);
       if (existing.exists) {
-        throw const BookException(
-          'A book with this title and author already exists.',
-        );
+        return false;
       }
       transaction.set(reference, {
         ...draft.toFields(),
@@ -48,24 +46,30 @@ class FirestoreBookRepository implements BookRepository {
         'favorite': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      return true;
     });
+    // Keep domain errors outside the SDK callback: Web bridges callback
+    // exceptions through JavaScript and can lose their original Dart type.
+    if (!created) {
+      throw const BookException(
+        'A book with this title and author already exists.',
+      );
+    }
     return id;
   }
 
   @override
   Future<String> save(String uid, String id, BookDraft draft) async {
     final nextId = bookDocumentId(uid, draft.title, draft.author);
-    await firestore.runTransaction((transaction) async {
+    final outcome = await firestore.runTransaction<String>((transaction) async {
       final current = await transaction.get(_books.doc(id));
       if (!current.exists || current.data()!['userId'] != uid) {
-        throw const BookException('This book is no longer available.');
+        return 'unavailable';
       }
       if (nextId != id) {
         final target = await transaction.get(_books.doc(nextId));
         if (target.exists) {
-          throw const BookException(
-            'A book with this title and author already exists.',
-          );
+          return 'duplicate';
         }
       }
       // A full replacement also removes an optional rating cleared in Edit.
@@ -77,7 +81,16 @@ class FirestoreBookRepository implements BookRepository {
         'createdAt': current.data()!['createdAt'],
       });
       if (nextId != id) transaction.delete(_books.doc(id));
+      return 'saved';
     });
+    if (outcome == 'duplicate') {
+      throw const BookException(
+        'A book with this title and author already exists.',
+      );
+    }
+    if (outcome == 'unavailable') {
+      throw const BookException('This book is no longer available.');
+    }
     return nextId;
   }
 

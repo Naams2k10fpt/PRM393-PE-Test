@@ -18,6 +18,7 @@ class ListScreen extends StatefulWidget {
 
 class _ListScreenState extends State<ListScreen> {
   final _search = TextEditingController();
+  final _scroll = ScrollController();
   bool _adding = false;
   bool _loggingOut = false;
   bool _filtersOpen = false;
@@ -45,6 +46,7 @@ class _ListScreenState extends State<ListScreen> {
   @override
   void dispose() {
     _search.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -80,6 +82,7 @@ class _ListScreenState extends State<ListScreen> {
       body: SafeArea(
         child: PageWidth(
           child: ListView(
+            controller: _scroll,
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             children: [
               Text(
@@ -138,6 +141,14 @@ class _ListScreenState extends State<ListScreen> {
                             setState(() {
                               _adding = false;
                               _notice = 'Book added';
+                            });
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!mounted || !_scroll.hasClients) return;
+                              _scroll.animateTo(
+                                0,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOut,
+                              );
                             });
                           },
                         ),

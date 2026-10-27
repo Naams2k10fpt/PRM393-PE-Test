@@ -121,7 +121,7 @@ Tạo Word thật tên `QE190117.docx`. Giữ nhãn như đề và điền passw
 Student Code: QE190117
 Full Name: Phạm Huỳnh Sum
 GitHub Repository URL: https://github.com/Naams2k10fpt/PRM393-PE-Test
-APK Download Link: https://github.com/Naams2k10fpt/PRM393-PE-Test/releases/download/v1.0.0/app-release.apk
+APK Download Link: https://github.com/Naams2k10fpt/PRM393-PE-Test/releases/download/v1.0.1/app-release.apk
 Firebase Project ID: prm393-pe-71dac
 Test account email: grader.qe190117@example.com
 Test account password: <TEST_PASSWORD trong file riêng>

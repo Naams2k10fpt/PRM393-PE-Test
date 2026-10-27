@@ -93,4 +93,4 @@ Output: build/app/outputs/flutter-apk/app-release.apk. Internet permission is in
 
 Source: https://github.com/Naams2k10fpt/PRM393-PE-Test
 
-APK: https://github.com/Naams2k10fpt/PRM393-PE-Test/releases/download/v1.0.0/app-release.apk
+APK: https://github.com/Naams2k10fpt/PRM393-PE-Test/releases/download/v1.0.1/app-release.apk
