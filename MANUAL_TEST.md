@@ -15,7 +15,7 @@ flutter devices
 flutter run -d emulator-5554
 ```
 
-Thay `emulator-5554` bằng ID Android từ `flutter devices`. Nếu chưa có thiết bị, mở Android Studio → Device Manager và chạy emulator, hoặc kết nối điện thoại có USB debugging. Project hiện cấu hình Android; chọn thiết bị Android.
+Thay `emulator-5554` bằng ID Android từ `flutter devices`. Nếu chưa có thiết bị, mở Android Studio → Device Manager và chạy emulator, hoặc kết nối điện thoại có USB debugging. Để kiểm tra bản Android, chọn thiết bị Android.
 
 Nếu thiếu SDK/license, xem `flutter doctor`, chạy `flutter doctor --android-licenses` và xử lý các mục được báo. Firebase client config thật đã có trong source. Không thêm admin/service-account key.
 
@@ -24,6 +24,18 @@ Tài khoản chính: `grader.qe190117@example.com`. Mật khẩu nằm trong `D:
 Năm sách mẫu ban đầu cho kết quả `Books: 5`, `Favorites: 3`, breakdown `To Read: 2`, `Reading: 2`, `Finished: 1`.
 
 ## Kiểm tra theo thứ tự
+
+Bạn cũng có thể chạy local trên Web:
+
+```powershell
+cd D:\PRM393\bookshelf
+flutter pub get
+.\tool\run_web.ps1
+```
+
+Mở `http://127.0.0.1:8085` bằng trình duyệt. Có thể dùng `flutter run -d chrome --web-port=8085` để Flutter mở Chrome. Giữ terminal chạy; bấm Ctrl+C để dừng. Nếu cổng bận, dùng `.\tool\run_web.ps1 -Port 8086`.
+
+Web và Android dùng chung tài khoản/dữ liệu Firebase thật, cần Internet để đăng nhập và đồng bộ. Dùng lại tài khoản chính và mật khẩu trong file riêng. Bài nộp và ảnh theo đề vẫn cần bản Android trên điện thoại/emulator; bản Web giúp kiểm tra thuận tiện trên máy tính.
 
 | Bước | Thao tác | Kết quả mong đợi |
 | --- | --- | --- |

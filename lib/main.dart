@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'app.dart';
 import 'firebase_options.dart';
@@ -25,7 +26,7 @@ class _BootstrapState extends State<_Bootstrap> {
   static const _emulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS');
   static const _host = String.fromEnvironment(
     'FIREBASE_EMULATOR_HOST',
-    defaultValue: '10.0.2.2',
+    defaultValue: kIsWeb ? '127.0.0.1' : '10.0.2.2',
   );
 
   Future<void> _initialize() async {
@@ -37,7 +38,9 @@ class _BootstrapState extends State<_Bootstrap> {
         options: _emulators
             ? const FirebaseOptions(
                 apiKey: 'AIzaSyDemoKeyForLocalEmulatorOnly000000',
-                appId: '1:1234567890:android:0123456789abcdef',
+                appId: kIsWeb
+                    ? '1:1234567890:web:0123456789abcdef'
+                    : '1:1234567890:android:0123456789abcdef',
                 messagingSenderId: '1234567890',
                 projectId: 'demo-bookshelf',
               )

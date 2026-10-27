@@ -2,9 +2,24 @@
 
 PRM393 Practical Exam — QE190117 — Phạm Huỳnh Sum
 
-A private Android reading library built with Flutter, Firebase Authentication and Cloud Firestore.
+A private reading library for Android and Web, built with Flutter and Firebase.
 
-## Run
+## Run locally on the web
+
+Web uses the same Firebase project, accounts and data as Android.
+
+~~~powershell
+flutter pub get
+.\tool\run_web.ps1
+~~~
+
+Open http://127.0.0.1:8085 in Chrome, Edge or Brave. Keep the terminal running; Ctrl+C stops it. To choose another port, use .\tool\run_web.ps1 -Port 8086.
+
+Alternatively, launch Chrome with flutter run -d chrome --web-port=8085. The app runs locally while Firebase Authentication/Firestore remain online.
+
+The Web client configuration in firebase.web.json is selected automatically by lib/firebase_options.dart. When changing projects, supply both Android and Web client JSON files to tool/configure_firebase.ps1 using -ConfigPath and -WebConfigPath.
+
+## Run on Android
 
 Built with Flutter 3.47.2 and Dart 3.13.2. Start an Android emulator or connect a USB-debugging device.
 

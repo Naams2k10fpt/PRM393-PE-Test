@@ -1,0 +1,21 @@
+import { createRequire } from 'node:module';
+import { writeFile } from 'node:fs/promises';
+const require = createRequire(import.meta.url);
+const { getGlobalDefaultAccount } = require('firebase-tools/lib/auth');
+const { requireAuth } = require('firebase-tools/lib/requireAuth');
+const { getAppConfig, AppPlatform } = require('firebase-tools/lib/management/apps');
+const { getAuthDomains, updateAuthDomains } = require('firebase-tools/lib/gcp/auth');
+const [project, appId] = process.argv.slice(2);
+if (!project || !appId) throw new Error('Pass your Firebase Project ID and Web App ID.');
+const account = getGlobalDefaultAccount();
+if (!account) throw new Error('Run firebase login first.');
+await requireAuth({ project, ...account });
+const config = await getAppConfig(appId, AppPlatform.WEB);
+if (config.projectId !== project) throw new Error('The Web app belongs to another project.');
+await writeFile(new URL('../firebase.web.json', import.meta.url), JSON.stringify(config, null, 2) + '\n');
+const domains = await getAuthDomains(project);
+const localDomains = ['localhost', '127.0.0.1'];
+const additions = localDomains.filter(domain => !domains.includes(domain));
+if (additions.length) await updateAuthDomains(project, [...domains, ...additions]);
+console.log(JSON.stringify({ project, webAppId: appId, localDomainsReady: true,
+  configFile: 'firebase.web.json' }));
