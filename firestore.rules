@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function hash(value) {
+      return hashing.sha256(value).toHexString().lower();
+    }
+    function canonicalId(data) {
+      return hash(data.userId) + '_' + hash(normalized(data.title))
+        + '_' + hash(normalized(data.author));
+    }
+    // Rules lower() folds ASCII only; explicitly cover Vietnamese and Latin-1.
+    function normalized(value) {
+      return value.trim().lower()
+        .replace('À', 'à')
+        .replace('Á', 'á')
+        .replace('Â', 'â')
+        .replace('Ã', 'ã')
+        .replace('Ä', 'ä')
+        .replace('Å', 'å')
+        .replace('Æ', 'æ')
+        .replace('Ç', 'ç')
+        .replace('È', 'è')
+        .replace('É', 'é')
+        .replace('Ê', 'ê')
+        .replace('Ë', 'ë')
+        .replace('Ì', 'ì')
+        .replace('Í', 'í')
+        .replace('Î', 'î')
+        .replace('Ï', 'ï')
+        .replace('Ð', 'ð')
+        .replace('Ñ', 'ñ')
+        .replace('Ò', 'ò')
+        .replace('Ó', 'ó')
+        .replace('Ô', 'ô')
+        .replace('Õ', 'õ')
+        .replace('Ö', 'ö')
+        .replace('Ø', 'ø')
+        .replace('Ù', 'ù')
+        .replace('Ú', 'ú')
+        .replace('Û', 'û')
+        .replace('Ü', 'ü')
+        .replace('Ý', 'ý')
+        .replace('Þ', 'þ')
+        .replace('Ă', 'ă')
+        .replace('Đ', 'đ')
+        .replace('Ĩ', 'ĩ')
+        .replace('Ũ', 'ũ')
+        .replace('Ơ', 'ơ')
+        .replace('Ư', 'ư')
+        .replace('Ÿ', 'ÿ')
+        .replace('Ạ', 'ạ')
+        .replace('Ả', 'ả')
+        .replace('Ấ', 'ấ')
+        .replace('Ầ', 'ầ')
+        .replace('Ẩ', 'ẩ')
+        .replace('Ẫ', 'ẫ')
+        .replace('Ậ', 'ậ')
+        .replace('Ắ', 'ắ')
+        .replace('Ằ', 'ằ')
+        .replace('Ẳ', 'ẳ')
+        .replace('Ẵ', 'ẵ')
+        .replace('Ặ', 'ặ')
+        .replace('Ẹ', 'ẹ')
+        .replace('Ẻ', 'ẻ')
+        .replace('Ẽ', 'ẽ')
+        .replace('Ế', 'ế')
+        .replace('Ề', 'ề')
+        .replace('Ể', 'ể')
+        .replace('Ễ', 'ễ')
+        .replace('Ệ', 'ệ')
+        .replace('Ỉ', 'ỉ')
+        .replace('Ị', 'ị')
+        .replace('Ọ', 'ọ')
+        .replace('Ỏ', 'ỏ')
+        .replace('Ố', 'ố')
+        .replace('Ồ', 'ồ')
+        .replace('Ổ', 'ổ')
+        .replace('Ỗ', 'ỗ')
+        .replace('Ộ', 'ộ')
+        .replace('Ớ', 'ớ')
+        .replace('Ờ', 'ờ')
+        .replace('Ở', 'ở')
+        .replace('Ỡ', 'ỡ')
+        .replace('Ợ', 'ợ')
+        .replace('Ụ', 'ụ')
+        .replace('Ủ', 'ủ')
+        .replace('Ứ', 'ứ')
+        .replace('Ừ', 'ừ')
+        .replace('Ử', 'ử')
+        .replace('Ữ', 'ữ')
+        .replace('Ự', 'ự')
+        .replace('Ỳ', 'ỳ')
+        .replace('Ỵ', 'ỵ')
+        .replace('Ỷ', 'ỷ')
+        .replace('Ỹ', 'ỹ');
+    }
+    function ownId(bookId) {
+      return bookId.matches(hash(request.auth.uid) + '_[0-9a-f]{64}_[0-9a-f]{64}');
+    }
+    function validBook(data, bookId) {
+      return data.keys().hasAll([
+          'id', 'userId', 'title', 'author', 'genre', 'status',
+          'favorite', 'notes', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'userId', 'title', 'author', 'genre', 'status',
+          'rating', 'favorite', 'notes', 'createdAt'
+        ])
+        && data.id is string && data.id == bookId
+        && data.userId is string && data.userId == request.auth.uid
+        && data.title is string && data.title.trim().size() > 0
+        && data.title.size() <= 100
+        && data.author is string && data.author.trim().size() > 0
+        && data.author.size() <= 60
+        && data.genre in ['Fiction', 'Non-Fiction', 'Academic', 'Other']
+        && data.status in ['To Read', 'Reading', 'Finished']
+        && (!('rating' in data) ||
+          (data.rating is int && data.rating >= 0 && data.rating <= 5))
+        && data.favorite is bool
+        && data.notes is string && data.notes.size() <= 300
+        && data.createdAt is timestamp && data.createdAt <= request.time
+        && bookId == canonicalId(data);
+    }
+
+    match /books/{bookId} {
+      // A transaction must be able to read an absent destination in its own
+      // namespace. Existing documents still require ownership.
+      allow get: if signedIn() && ownId(bookId)
+        && (!exists(/databases/$(database)/documents/books/$(bookId))
+          || resource.data.userId == request.auth.uid);
+      allow list: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn() && validBook(request.resource.data, bookId);
+      allow update: if signedIn() && resource.data.userId == request.auth.uid
+        && validBook(request.resource.data, bookId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
